@@ -89,11 +89,74 @@
   .item-remove{color:var(--danger); cursor:pointer; font-size:16px; background:none; border:none;}
   .empty-state{text-align:center; padding:60px 20px; color:var(--slate);}
   .empty-state .big{font-family:'Lora',serif; font-size:18px; color:var(--ink); margin-bottom:6px;}
+
+  /* ---------- General modern polish (applies at all sizes) ---------- */
+  *{-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  .card{box-shadow:0 1px 3px rgba(27,42,61,.06); transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease;}
+  .card:hover{box-shadow:0 8px 20px rgba(27,42,61,.10); border-color:#D9CDA8;}
+  .btn{transition:background .15s ease, box-shadow .15s ease, transform .1s ease;}
+  .btn-primary, .btn-amber{box-shadow:0 1px 2px rgba(0,0,0,.10);}
+  .toast{backdrop-filter:blur(6px);}
+
+  /* ---------- Mobile top bar + drawer sidebar (hidden on desktop) ---------- */
+  .mobile-topbar{display:none;}
+  .sidebar-backdrop{display:none;}
+  .sidebar-close-btn{display:none;}
+
+  @media (max-width: 880px){
+    body{display:block;}
+    .mobile-topbar{
+      display:flex; align-items:center; gap:14px; position:sticky; top:0; z-index:900;
+      background:var(--chrome); color:#fff; padding:12px 16px; height:52px;
+    }
+    .hamburger-btn{
+      background:none; border:none; color:#fff; font-size:22px; line-height:1; cursor:pointer; padding:4px 6px;
+    }
+    .mobile-brand{font-family:'Lora',serif; font-weight:700; font-size:18px;}
+    .mobile-brand span{color:var(--amber);}
+
+    .sidebar{
+      position:fixed; top:0; left:0; height:100vh; width:min(78vw, 280px);
+      transform:translateX(-100%); transition:transform .25s ease; z-index:1000;
+      box-shadow:10px 0 30px rgba(0,0,0,.28);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-close-btn{
+      display:block; position:absolute; top:14px; right:14px; background:none; border:none;
+      color:#B7C2CC; font-size:22px; line-height:1; cursor:pointer; padding:4px 8px;
+    }
+    .sidebar-backdrop.show{
+      display:block; position:fixed; inset:0; background:rgba(10,16,24,.5); z-index:999;
+    }
+    .nav-item{padding:15px 24px; font-size:15px;}
+
+    .main{padding:18px 16px 60px 16px; max-height:none;}
+    h1{font-size:21px;}
+    .subtitle{font-size:13px;}
+    .setup-steps{padding:16px 18px;}
+    .card-grid{grid-template-columns:repeat(auto-fill, minmax(200px,1fr));}
+    .form-fields{grid-template-columns:1fr;}
+    #itemsSection{overflow-x:auto;}
+    .items-table{min-width:520px;}
+    .toolbar .btn{flex:1 1 auto; text-align:center;}
+  }
+  @media (max-width: 480px){
+    .card-grid{grid-template-columns:1fr;}
+    .toolbar .btn{flex:1 1 100%;}
+  }
 </style>
 </head>
 <body>
 
+<div class="mobile-topbar">
+  <button class="hamburger-btn" id="btnOpenSidebar" aria-label="Open menu">☰</button>
+  <div class="mobile-brand">Ledger<span>.</span></div>
+</div>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <div class="sidebar">
+  <button class="sidebar-close-btn" id="btnCloseSidebar" aria-label="Close menu">×</button>
   <div class="brand">Ledger<span>.</span></div>
   <div class="sidebar-conn"><span class="conn-dot" id="connDot"></span><span id="connLabel">Not connected</span></div>
   <div class="nav-item active" data-view="setup"><span class="nav-num">00</span>&nbsp;&nbsp;Setup</div>
@@ -212,7 +275,7 @@ const LS_CLIENT_ID = 'ledger_gdocs_client_id';
 // a public identifier (not a secret, unlike a client *secret*), so it's safe
 // to bake in. Once this is filled in, nobody else needs to touch the Setup tab's
 // Client ID field at all — they'll just see "Sign in with Google" directly.
-const BAKED_IN_CLIENT_ID = '110242181830-ospr2prh0ug49pat7vfbv022hpi5ha77.apps.googleusercontent.com';
+const BAKED_IN_CLIENT_ID = '';
 const LS_TEMPLATES = 'ledger_gdocs_templates';
 const LS_HISTORY = 'ledger_gdocs_history';
 
@@ -437,6 +500,22 @@ function showView(name){
   if(name==='newinvoice') renderInvoiceTemplateSelect();
   if(name==='history') renderHistoryGrid();
 }
+
+/* ================= Mobile drawer (additive — doesn't affect desktop or app logic) ================= */
+function openMobileSidebar(){
+  document.querySelector('.sidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('show');
+}
+function closeMobileSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
+}
+document.getElementById('btnOpenSidebar').addEventListener('click', openMobileSidebar);
+document.getElementById('btnCloseSidebar').addEventListener('click', closeMobileSidebar);
+document.getElementById('sidebarBackdrop').addEventListener('click', closeMobileSidebar);
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', closeMobileSidebar);
+});
 
 /* ================= Templates view ================= */
 function renderTemplateGrid(){
